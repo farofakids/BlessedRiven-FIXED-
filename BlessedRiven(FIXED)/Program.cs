@@ -19,24 +19,20 @@ namespace Blessed_Riven
         public static Spell.Active Q, W, E, R1;
         public static Spell.Skillshot R;
  
-        static Spell.Targeted Smite = null;
+        
         public static bool EnableR;
         public static int LastCastQ;
         public static int LastCastW;
-        private static int lastwd;
         private static readonly float _barLength = 104;
         private static readonly float _xOffset = 2;
         private static readonly float _yOffset = 9;
         private static bool ssfl;
         public static int QCount;
-        public static Menu Menu, FarmingMenu, MiscMenu, DrawMenu, HarassMenu, ComboMenu, Skin, DelayMenu,SmiteMenu;
+        public static Menu Menu, FarmingMenu, MiscMenu, DrawMenu, HarassMenu, ComboMenu, DelayMenu;
         static Item Healthpot;
-        public static SpellSlot SmiteSlot = SpellSlot.Unknown;
+
         public static SpellSlot IgniteSlot = SpellSlot.Unknown;
-        private static readonly int[] SmitePurple = { 3713, 3726, 3725, 3726, 3723 };
-        private static readonly int[] SmiteGrey = { 3711, 3722, 3721, 3720, 3719 };
-        private static readonly int[] SmiteRed = { 3715, 3718, 3717, 3716, 3714 };
-        private static readonly int[] SmiteBlue = { 3706, 3710, 3709, 3708, 3707 };
+
         private static Spell.Targeted _ignite;
 
         static void Main(string[] args)
@@ -50,26 +46,6 @@ namespace Blessed_Riven
             get { return ObjectManager.Player; }
 
 
-        }
-
-        private static string Smitetype
-        {
-            get
-            {
-                if (SmiteBlue.Any(i => Item.HasItem(i)))
-                    return "s5_summonersmiteplayerganker";
-
-                if (SmiteRed.Any(i => Item.HasItem(i)))
-                    return "s5_summonersmiteduel";
-
-                if (SmiteGrey.Any(i => Item.HasItem(i)))
-                    return "s5_summonersmitequick";
-
-                if (SmitePurple.Any(i => Item.HasItem(i)))
-                    return "itemsmiteaoe";
-
-                return "summonersmite";
-            }
         }
 
         private static void Loading_OnLoadingComplete(EventArgs args)
@@ -143,17 +119,12 @@ namespace Blessed_Riven
             MiscMenu.Add("AutoIgnite", new CheckBox("Auto Ignite"));
             MiscMenu.Add("AutoQSS", new CheckBox("Auto QSS"));
             MiscMenu.Add("AutoW", new CheckBox("Auto W"));
+            MiscMenu.Add("WInterrupt", new CheckBox("W Interrupt"));
             MiscMenu.AddLabel("Keep Alive Settings");
             MiscMenu.Add("Alive.Q", new CheckBox("Keep Q Alive"));
-            MiscMenu.Add("Alive.R", new CheckBox("Use R2 Before Expire"));
             MiscMenu.AddLabel("Activator");
             MiscMenu.Add("useHP", new CheckBox("Use Health Potion"));
             MiscMenu.Add("useHPV", new Slider("HP < %", 45, 0, 100));
-            MiscMenu.Add("useElixir", new CheckBox("Use Elixir"));
-            MiscMenu.Add("useElixirCount", new Slider("EnemyCount > ", 1, 0, 4));
-            MiscMenu.Add("useCrystal", new CheckBox("Use Refillable Potions"));
-            MiscMenu.Add("useCrystalHPV", new Slider("HP < %", 65, 0, 100));
-            MiscMenu.Add("useCrystalManaV", new Slider("Mana < %", 65, 0, 100));
 
             DelayMenu = Menu.AddSubMenu("Delay Settings(Humanizer)", "Delay");
             DelayMenu.Add("useHumanizer", new CheckBox("Use Humanizer?", false));
@@ -162,10 +133,6 @@ namespace Blessed_Riven
             DelayMenu.Add("spell2", new Slider("W Delay(ms)", 120, 100, 400));
             DelayMenu.Add("spell4a", new Slider("R Delay(ms)", 0, 0, 400));
             DelayMenu.Add("spell4b", new Slider("R2 Delay(ms)", 100, 50, 400));
-
-            Skin = Menu.AddSubMenu("Skin Changer", "SkinChanger");
-            Skin.Add("checkSkin", new CheckBox("Use Skin Changer"));
-            Skin.Add("skin.Id", new Slider("Skin", 4, 0, 6));
 
             DrawMenu = Menu.AddSubMenu("Draw Settings", "Drawings");
             DrawMenu.Add("drawStatus", new CheckBox("Draw Status"));
@@ -179,6 +146,16 @@ namespace Blessed_Riven
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
             Obj_AI_Base.OnSpellCast += Obj_AI_Base_OnSpellCast;
             Obj_AI_Base.OnPlayAnimation += Obj_AI_Base_OnPlayAnimation;
+            Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
+
+        }
+
+        private static void Interrupter_OnInterruptableSpell(Obj_AI_Base sender, Interrupter.InterruptableSpellEventArgs e)
+        {
+            if (sender.IsEnemy && W.IsReady() && sender.IsValidTarget() && !sender.IsZombie && MiscMenu["WInterrupt"].Cast<CheckBox>().CurrentValue)
+            {
+                if (sender.IsValidTarget(125 + Player.Instance.BoundingRadius + sender.BoundingRadius)) W.Cast();
+            }
         }
 
         private static void DoQSS()
@@ -200,7 +177,6 @@ namespace Blessed_Riven
         {
             var HPpot = MiscMenu["useHP"].Cast<CheckBox>().CurrentValue;
             var HPv = MiscMenu["useHPv"].Cast<Slider>().CurrentValue;
-            //var t = TargetSelector.GetTarget(Smite.Range, DamageType.Magical);
 
             if (LastCastQ + 3600 < Environment.TickCount)
             {
@@ -277,17 +253,190 @@ namespace Blessed_Riven
                     return;
                 }
             }
-            if (_Player.SkinId != Skin["skin.Id"].Cast<Slider>().CurrentValue)
-            {
-                if (checkSkin())
-                {
-                    Player.SetSkinId(SkinId());
-                }
-            }
         }
   
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
+            if (sender.IsEnemy || sender.Type == _Player.Type || MiscMenu["UseShield"].Cast<CheckBox>().CurrentValue)
+            {
+                var epos = _Player.ServerPosition +
+                           (_Player.ServerPosition - sender.ServerPosition).Normalized() * 300;
+
+                if (!(_Player.Distance(sender.ServerPosition) <= args.SData.CastRange)) return;
+                switch (args.SData.TargettingType)
+                {
+                    case SpellDataTargetType.Unit:
+
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (Orbwalker.ActiveModesFlags == Orbwalker.ActiveModes.LastHit &&
+                                !args.SData.Name.Contains("NasusW"))
+                            {
+                                if (E.IsReady()) Player.CastSpell(SpellSlot.E, epos);
+                            }
+                        }
+
+                        break;
+                    case SpellDataTargetType.SelfAoe:
+
+                        if (Orbwalker.ActiveModesFlags == Orbwalker.ActiveModes.LastHit)
+                        {
+                            if (E.IsReady()) Player.CastSpell(SpellSlot.E, epos);
+                        }
+
+                        break;
+                }
+                if (args.SData.Name.Contains("IreliaEquilibriumStrike"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (W.IsReady() && W.IsInRange(sender)) W.Cast();
+                        else if (E.IsReady()) Player.CastSpell(SpellSlot.E, epos);
+                    }
+                }
+                if (args.SData.Name.Contains("TalonCutthroat"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (W.IsReady()) W.Cast();
+                    }
+                }
+                if (args.SData.Name.Contains("RenektonPreExecute"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (W.IsReady()) W.Cast();
+                    }
+                }
+                if (args.SData.Name.Contains("GarenRPreCast"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, epos);
+                    }
+                }
+                if (args.SData.Name.Contains("GarenQAttack"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("XenZhaoThrust3"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (W.IsReady()) W.Cast();
+                    }
+                }
+                if (args.SData.Name.Contains("RengarQ"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("RengarPassiveBuffDash"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("RengarPassiveBuffDashAADummy"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("TwitchEParticle"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("FizzPiercingStrike"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("HungeringStrike"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("YasuoDash"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("KatarinaRTrigger"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (W.IsReady() && W.IsInRange(sender)) W.Cast();
+                        else if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("YasuoDash"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("KatarinaE"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (W.IsReady()) W.Cast();
+                    }
+                }
+                if (args.SData.Name.Contains("MonkeyKingQAttack"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("MonkeyKingSpinToWin"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                        else if (W.IsReady()) W.Cast();
+                    }
+                }
+                if (args.SData.Name.Contains("MonkeyKingQAttack"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("MonkeyKingQAttack"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+                if (args.SData.Name.Contains("MonkeyKingQAttack"))
+                {
+                    if (args.Target.NetworkId == _Player.NetworkId)
+                    {
+                        if (E.IsReady()) Player.CastSpell(SpellSlot.E, Game.CursorPos);
+                    }
+                }
+            }
             if (!sender.IsMe) return;
 
             if (args.SData.Name.ToLower().Contains(W.Name.ToLower()))
@@ -758,16 +907,6 @@ namespace Blessed_Riven
                 }
                 Core.DelayAction(ForceItem, 50);
             }
-        }
-
-        public static int SkinId()
-        {
-            return Skin["skin.Id"].Cast<Slider>().CurrentValue;
-        }
-
-        public static bool checkSkin()
-        {
-            return Skin["checkSkin"].Cast<CheckBox>().CurrentValue;
         }
 
         private static void Combo()
