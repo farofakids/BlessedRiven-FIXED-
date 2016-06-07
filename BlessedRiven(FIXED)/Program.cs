@@ -7,10 +7,10 @@ using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
 using EloBuddy.SDK.Menu.Values;
-using EloBuddy.SDK.Rendering;
 using Color = System.Drawing.Color;
 using EloBuddy.SDK.Constants;
 using SharpDX;
+using EloBuddy.SDK.Rendering;
 
 namespace Blessed_Riven
 {
@@ -135,14 +135,10 @@ namespace Blessed_Riven
             DelayMenu.Add("spell4b", new Slider("R2 Delay(ms)", 100, 50, 400));
 
             DrawMenu = Menu.AddSubMenu("Draw Settings", "Drawings");
-            DrawMenu.Add("drawStatus", new CheckBox("Draw Status"));
-            DrawMenu.Add("drawCombo", new CheckBox("Draw Combo Range"));
-            DrawMenu.Add("drawFBurst", new CheckBox("Draw Flash Burst Range"));
-            DrawMenu.Add("DrawDamage", new CheckBox("Draw Damage Bar"));
+            DrawMenu.Add("drawCombo", new CheckBox("Draw Combo Range", false));
 
             Game.OnTick += Game_OnTick;
             Drawing.OnDraw += Drawing_OnDraw;
-            Drawing.OnEndScene += Drawing_OnEndScene;
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
             Obj_AI_Base.OnSpellCast += Obj_AI_Base_OnSpellCast;
             Obj_AI_Base.OnPlayAnimation += Obj_AI_Base_OnPlayAnimation;
@@ -231,6 +227,8 @@ namespace Blessed_Riven
         private static void Auto()
         {
             var w = TargetSelector.GetTarget(W.Range, DamageType.Physical);
+            if (w == null) return;
+
             if (w.IsValidTarget(W.Range) && MiscMenu["AutoW"].Cast<CheckBox>().CurrentValue)
             {
                 W.Cast();
@@ -749,17 +747,17 @@ namespace Blessed_Riven
                     passivenhan = 0.2f;
                 }
                 if (Item.HasItem(3074)) damage = damage + _Player.GetAutoAttackDamage(enemy) * 0.7f;
-                if (W.IsReady()) damage = damage + ObjectManager.Player.GetSpellDamage(enemy, SpellSlot.W);
+                if (W.IsReady()) damage = damage + Damage.WDamage();
                 if (Q.IsReady())
                 {
                     var qnhan = 4 - QCount;
-                    damage = damage + ObjectManager.Player.GetSpellDamage(enemy, SpellSlot.Q) * qnhan +
+                    damage = damage + Damage.QDamage() * qnhan +
                              _Player.GetAutoAttackDamage(enemy) * qnhan * (1 + passivenhan);
                 }
                 damage = damage + _Player.GetAutoAttackDamage(enemy) * (1 + passivenhan);
                 if (R.IsReady())
                 {
-                    return damage * 1.2f + ObjectManager.Player.GetSpellDamage(enemy, SpellSlot.R);
+                    return damage * 1.2f + Damage.RDamage(enemy);
                 }
 
                 return damage;
@@ -1126,44 +1124,11 @@ namespace Blessed_Riven
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            if (DrawMenu["drawCombo"].Cast<CheckBox>().CurrentValue)
-            {
-                Drawing.DrawCircle(_Player.Position, Q.Range + E.Range, Color.Red);
-            }
-            if (DrawMenu["drawFBurst"].Cast<CheckBox>().CurrentValue)
-            {
-                Drawing.DrawCircle(_Player.Position, 425 + E.Range, Color.Green);
-            }
-            if (DrawMenu["drawStatus"].Cast<CheckBox>().CurrentValue)
-            {                
-                var pos = Drawing.WorldToScreen(Player.Instance.Position);
-                Drawing.DrawText((int)pos.X - 45, (int)pos.Y + 40, Color.DarkGray, "Forced R: " + IsRActive);
-            }
-        }
-
-        private static void Drawing_OnEndScene(EventArgs args)
-        {
             if (_Player.IsDead)
                 return;
-            if (!DrawMenu["DrawDamage"].Cast<CheckBox>().CurrentValue) return;
-            foreach (var aiHeroClient in EntityManager.Heroes.Enemies)
+            if (DrawMenu["drawCombo"].Cast<CheckBox>().CurrentValue)
             {
-                if(aiHeroClient.Distance(_Player) < 1000)
-                {               
-                var pos = new Vector2(aiHeroClient.HPBarPosition.X + _xOffset, aiHeroClient.HPBarPosition.Y + _yOffset);
-                var fullbar = (_barLength) * (aiHeroClient.HealthPercent / 100);
-                var damage = (_barLength) *
-                                 ((getComboDamage(aiHeroClient) / aiHeroClient.MaxHealth) > 1
-                                     ? 1
-                                     : (getComboDamage(aiHeroClient) / aiHeroClient.MaxHealth));
-                Line.DrawLine(Color.Gray, 9f, new Vector2(pos.X, pos.Y),
-                    new Vector2(pos.X + (damage > fullbar ? fullbar : damage), pos.Y));
-                Line.DrawLine(Color.Black, 9, new Vector2(pos.X + (damage > fullbar ? fullbar : damage) - 2, pos.Y), new Vector2(pos.X + (damage > fullbar ? fullbar : damage) + 2, pos.Y));
-                }
-                else
-                {
-                    return;
-                }
+                Circle.Draw(E.IsReady() ? SharpDX.Color.LimeGreen : SharpDX.Color.IndianRed, 250 + _Player.AttackRange + 70, ObjectManager.Player.Position);
             }
         }
 
