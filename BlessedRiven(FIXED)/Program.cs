@@ -23,9 +23,6 @@ namespace Blessed_Riven
         public static bool EnableR;
         public static int LastCastQ;
         public static int LastCastW;
-        private static readonly float _barLength = 104;
-        private static readonly float _xOffset = 2;
-        private static readonly float _yOffset = 9;
         private static bool ssfl;
         public static int QCount;
         public static Menu Menu, FarmingMenu, MiscMenu, DrawMenu, HarassMenu, ComboMenu, DelayMenu;
@@ -44,17 +41,15 @@ namespace Blessed_Riven
         public static AIHeroClient _Player
         {
             get { return ObjectManager.Player; }
-
-
         }
 
         private static void Loading_OnLoadingComplete(EventArgs args)
         {
-            if (Player.Instance.ChampionName != "Riven") return;
+            if (_Player.ChampionName != "Riven") return;
 
             Q = new Spell.Active(SpellSlot.Q, 300);
-            W = new Spell.Active(SpellSlot.W, (uint) (70 + Player.Instance.BoundingRadius +
-                                              (Player.Instance.HasBuff("RivenFengShuiEngine") ? 195 : 120)));
+            W = new Spell.Active(SpellSlot.W, (uint) (70 + _Player.BoundingRadius +
+                                              (_Player.HasBuff("RivenFengShuiEngine") ? 195 : 120)));
             E = new Spell.Active(SpellSlot.E, 325);
             R = new Spell.Skillshot(SpellSlot.R, 900, SkillShotType.Cone, 250, 1600, 45)
             {
@@ -111,7 +106,6 @@ namespace Blessed_Riven
             FarmingMenu.AddLabel("Last Hit");
             FarmingMenu.Add("Qlasthit", new CheckBox("Use Q LastHit"));
             FarmingMenu.Add("Wlasthit", new CheckBox("Use W LastHit"));
-            FarmingMenu.Add("Elasthit", new CheckBox("Use E LastHit"));
 
             MiscMenu = Menu.AddSubMenu("More Settings", "Misc");
             MiscMenu.AddLabel("Auto");
@@ -150,7 +144,7 @@ namespace Blessed_Riven
         {
             if (sender.IsEnemy && W.IsReady() && sender.IsValidTarget() && !sender.IsZombie && MiscMenu["WInterrupt"].Cast<CheckBox>().CurrentValue)
             {
-                if (sender.IsValidTarget(125 + Player.Instance.BoundingRadius + sender.BoundingRadius)) W.Cast();
+                if (sender.IsValidTarget(125 + _Player.BoundingRadius + sender.BoundingRadius)) W.Cast();
             }
         }
 
@@ -178,7 +172,7 @@ namespace Blessed_Riven
             {
                 QCount = 0;
             }
-            if (MiscMenu["Alive.Q"].Cast<CheckBox>().CurrentValue && !Player.Instance.IsRecalling() && QCount < 3 && QCount > 0 && LastCastQ + 3480 < Environment.TickCount && Player.Instance.HasBuff("RivenTriCleaveBuff") && !Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
+            if (MiscMenu["Alive.Q"].Cast<CheckBox>().CurrentValue && !_Player.IsRecalling() && QCount < 3 && QCount > 0 && LastCastQ + 3480 < Environment.TickCount && _Player.HasBuff("RivenTriCleaveBuff") && !Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
             {
                 Player.CastSpell(SpellSlot.Q,
                     Orbwalker.LastTarget != null && Orbwalker.LastAutoAttack - Environment.TickCount < 3000
@@ -188,7 +182,7 @@ namespace Blessed_Riven
             }
             foreach (AIHeroClient enemy in EntityManager.Heroes.Enemies)
             {     
-                if (HPpot && Player.Instance.HealthPercent < HPv && _Player.Distance(enemy) < 2000)
+                if (HPpot && _Player.HealthPercent < HPv && _Player.Distance(enemy) < 2000)
                 {
                     if (Item.HasItem(Healthpot.Id) && Item.CanUseItem(Healthpot.Id) && !Player.HasBuff("RegenerationPotion"))
                     {
@@ -239,13 +233,13 @@ namespace Blessed_Riven
             }
             if (MiscMenu["AutoIgnite"].Cast<CheckBox>().CurrentValue)
             {
-                if (!_ignite.IsReady() || Player.Instance.IsDead) return;
+                if (!_ignite.IsReady() || _Player.IsDead) return;
                 foreach (
                     var source in
                         EntityManager.Heroes.Enemies
                             .Where(
                                 a => a.IsValidTarget(_ignite.Range) &&
-                                    a.Health < 50 + 20 * Player.Instance.Level - (a.HPRegenRate / 5 * 3)))
+                                    a.Health < 50 + 20 * _Player.Level - (a.HPRegenRate / 5 * 3)))
                 {
                     _ignite.Cast(source);
                     return;
@@ -455,7 +449,7 @@ namespace Blessed_Riven
                 if (!MiscMenu["Alive.Q"].Cast<CheckBox>().CurrentValue) return;
                 Core.DelayAction(() =>
                 {
-                    if (!Player.Instance.IsRecalling() && QCount <= 2)
+                    if (!_Player.IsRecalling() && QCount <= 2)
                     {
                         Player.CastSpell(SpellSlot.Q,
                             Orbwalker.LastTarget != null && Orbwalker.LastAutoAttack - Environment.TickCount < 3000
@@ -561,6 +555,7 @@ namespace Blessed_Riven
                 Orbwalker.ResetAutoAttack();
                 Core.DelayAction(CancelAnimation, t - Game.Ping);
             }
+
         }
 
         private static void CancelAnimation()
@@ -573,6 +568,7 @@ namespace Blessed_Riven
         {
             if (!sender.IsMe) return;
             var target = args.Target as Obj_AI_Base;
+            var targetC = args.Target as AIHeroClient;
 
             // Hydra
             if (args.SData.Name.ToLower().Contains("itemtiamatcleave"))
@@ -594,7 +590,7 @@ namespace Blessed_Riven
             {
                 if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
                 {
-                    if (Player.Instance.HasBuff("RivenFengShuiEngine") && R.IsReady() &&
+                    if (_Player.HasBuff("RivenFengShuiEngine") && R.IsReady() &&
                         ComboMenu["R2Combo"].Cast<CheckBox>().CurrentValue)
                     {
                         ssfl = true;
@@ -602,9 +598,9 @@ namespace Blessed_Riven
                         if (target2 != null &&
                             (target2.Distance(Player.Instance) < W.Range &&
                              target2.Health >
-                             Player.Instance.CalculateDamageOnUnit(target2, DamageType.Physical, Damage.WDamage()) ||
+                             _Player.CalculateDamageOnUnit(target2, DamageType.Physical, Damage.WDamage()) ||
                              target2.Distance(Player.Instance) > W.Range) &&
-                            Player.Instance.CalculateDamageOnUnit(target2, DamageType.Physical,
+                            _Player.CalculateDamageOnUnit(target2, DamageType.Physical,
                                 Damage.RDamage(target2) + Damage.WDamage()) > target2.Health)
                         {
                             R.Cast(target2);
@@ -629,13 +625,13 @@ namespace Blessed_Riven
             {
                 if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
                 {
-                    if (Player.Instance.HasBuff("RivenFengShuiEngine") && R.IsReady() &&
+                    if (_Player.HasBuff("RivenFengShuiEngine") && R.IsReady() &&
                         ComboMenu["R2Combo"].Cast<CheckBox>().CurrentValue)
                     {
                         ssfl = true;
                         var target2 = TargetSelector.GetTarget(R.Range, DamageType.Physical);
                         if (target2 != null &&
-                            Player.Instance.CalculateDamageOnUnit(target2, DamageType.Physical,
+                            _Player.CalculateDamageOnUnit(target2, DamageType.Physical,
                                 (Damage.RDamage(target2))) > target2.Health)
                         {
                             R.Cast(target2);
@@ -643,7 +639,7 @@ namespace Blessed_Riven
                         }
                     }
                     if ((EnableR == true) && R.IsReady() &&
-                        !Player.Instance.HasBuff("RivenFengShuiEngine") &&
+                        !_Player.HasBuff("RivenFengShuiEngine") &&
                         ComboMenu["RCombo"].Cast<CheckBox>().CurrentValue)
                     {
                         ssfl = false;
@@ -651,7 +647,7 @@ namespace Blessed_Riven
                         Player.CastSpell(SpellSlot.R);
                     }
                     target = TargetSelector.GetTarget(W.Range, DamageType.Physical);
-                    if (target != null && Player.Instance.Distance(target) < W.Range)
+                    if (target != null && _Player.Distance(target) < W.Range)
                     {
                         Player.CastSpell(SpellSlot.W);
                         return;
@@ -664,16 +660,16 @@ namespace Blessed_Riven
             {
                 if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
                 {
-                    if (Player.Instance.HasBuff("RivenFengShuiEngine") && R.IsReady() &&
+                    if (_Player.HasBuff("RivenFengShuiEngine") && R.IsReady() &&
                         ComboMenu["R2Combo"].Cast<CheckBox>().CurrentValue)
                     {
                         var target2 = TargetSelector.GetTarget(R.Range, DamageType.Physical);
                         if (target2 != null &&
                             (target2.Distance(Player.Instance) < 300 &&
                              target2.Health >
-                             Player.Instance.CalculateDamageOnUnit(target2, DamageType.Physical, Damage.QDamage()) ||
+                             _Player.CalculateDamageOnUnit(target2, DamageType.Physical, Damage.QDamage()) ||
                              target2.Distance(Player.Instance) > 300) &&
-                            Player.Instance.CalculateDamageOnUnit(target2, DamageType.Physical,
+                            _Player.CalculateDamageOnUnit(target2, DamageType.Physical,
                                 Damage.RDamage(target2) + Damage.QDamage()) > target2.Health)
                         {
                             R.Cast(target2);
@@ -685,16 +681,6 @@ namespace Blessed_Riven
 
             if (args.SData.IsAutoAttack() && target != null)
             {
-                if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
-                {
-                    ComboAfterAa(target);
-                }
-
-                if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Harass))
-                {
-                    HarassAfterAa(target);
-                }
-
                 if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.JungleClear))
                 {
                     JungleAfterAa(target);
@@ -710,7 +696,20 @@ namespace Blessed_Riven
                     LaneClearAfterAa(target);
                 }
             }
-        }
+            if (args.SData.IsAutoAttack() && targetC != null)
+            {
+                if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
+                {
+                    ComboAfterAa(targetC);
+                }
+
+                if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Harass))
+                {
+                    HarassAfterAa(targetC);
+                }
+            }
+
+            }
 
         private static float getComboDamage(Obj_AI_Base enemy)
         {
@@ -765,14 +764,14 @@ namespace Blessed_Riven
             return 0;
         }
 
-        public static void ComboAfterAa(Obj_AI_Base target)
+        public static void ComboAfterAa(AIHeroClient target)
         {
             try
             {
-                if (Player.Instance.HasBuff("RivenFengShuiEngine") && R.IsReady() &&
+                if (_Player.HasBuff("RivenFengShuiEngine") && R.IsReady() &&
                     ComboMenu["R2Combo"].Cast<CheckBox>().CurrentValue)
                 {
-                    if (Player.Instance.CalculateDamageOnUnit(target, DamageType.Physical, Damage.RDamage(target)) + Player.Instance.GetAutoAttackDamage(target, true) > target.Health)
+                    if (_Player.CalculateDamageOnUnit(target, DamageType.Physical, Damage.RDamage(target)) + _Player.GetAutoAttackDamage(target, true) > target.Health)
                     {
                         ssfl = true;
                         R.Cast(target);
@@ -800,7 +799,7 @@ namespace Blessed_Riven
         
         }
 
-        public static void HarassAfterAa(Obj_AI_Base target)
+        public static void HarassAfterAa(AIHeroClient target)
         {
             
                 if (HarassMenu["WHarass"].Cast<CheckBox>().CurrentValue && W.IsReady() &&
@@ -823,11 +822,11 @@ namespace Blessed_Riven
         public static void LastHitAfterAa(Obj_AI_Base target)
         {
             
-                var unitHp = target.Health - Player.Instance.GetAutoAttackDamage(target, true);
+                var unitHp = target.Health - _Player.GetAutoAttackDamage(target, true);
                 if (unitHp > 0)
                 {
                     if (FarmingMenu["QLastHit"].Cast<CheckBox>().CurrentValue && Q.IsReady() &&
-                        Player.Instance.CalculateDamageOnUnit(target, DamageType.Physical, Damage.QDamage()) >
+                        _Player.CalculateDamageOnUnit(target, DamageType.Physical, Damage.QDamage()) >
                         unitHp)
                     {
                         Player.CastSpell(SpellSlot.Q, target.Position);
@@ -835,7 +834,7 @@ namespace Blessed_Riven
                     }
                     if (FarmingMenu["WLastHit"].Cast<CheckBox>().CurrentValue && W.IsReady() &&
                         W.IsInRange(target) &&
-                        Player.Instance.CalculateDamageOnUnit(target, DamageType.Physical, Damage.WDamage()) >
+                        _Player.CalculateDamageOnUnit(target, DamageType.Physical, Damage.WDamage()) >
                         unitHp)
                     {
                         Player.CastSpell(SpellSlot.W);
@@ -848,7 +847,7 @@ namespace Blessed_Riven
         {
             try
             { 
-                var unitHp = target.Health - Player.Instance.GetAutoAttackDamage(target, true);
+                var unitHp = target.Health - _Player.GetAutoAttackDamage(target, true);
                 if (unitHp > 0)
                 {
                     if (FarmingMenu["QLaneClear"].Cast<CheckBox>().CurrentValue && Q.IsReady())
@@ -866,7 +865,7 @@ namespace Blessed_Riven
                 else
                 {
                     List<Obj_AI_Minion> minions = EntityManager.MinionsAndMonsters.GetLaneMinions(EntityManager.UnitTeam.Enemy,
-                        Player.Instance.Position, Q.Range).Where(a => a.NetworkId != target.NetworkId).ToList();
+                        _Player.Position, Q.Range).Where(a => a.NetworkId != target.NetworkId).ToList();
                     if (FarmingMenu["QLaneClear"].Cast<CheckBox>().CurrentValue && Q.IsReady() && minions.Any())
                     {
                         Player.CastSpell(SpellSlot.Q, minions[0].Position);
@@ -921,14 +920,14 @@ namespace Blessed_Riven
             EnableR = false;
             try
             { 
-                if (R.IsReady() && Player.Instance.HasBuff("RivenFengShuiEngine") &&
+                if (R.IsReady() && _Player.HasBuff("RivenFengShuiEngine") &&
                      ComboMenu["R2Combo"].Cast<CheckBox>().CurrentValue)
             {
                 if (EntityManager.Heroes.Enemies.Where(
                         enemy =>
                             enemy.IsValidTarget(R.Range) &&
                             enemy.Health <
-                            Player.Instance.CalculateDamageOnUnit(enemy, DamageType.Physical,
+                            _Player.CalculateDamageOnUnit(enemy, DamageType.Physical,
                                 Damage.RDamage(enemy))).Any(enemy => R.Cast(enemy)))
                 {
                     ssfl = true;
@@ -936,14 +935,14 @@ namespace Blessed_Riven
                 }
             }
 
-            if (ComboMenu["RCombo"].Cast<CheckBox>().CurrentValue && R.IsReady() && !Player.Instance.HasBuff("RivenFengShuiEngine"))
+            if (ComboMenu["RCombo"].Cast<CheckBox>().CurrentValue && R.IsReady() && !_Player.HasBuff("RivenFengShuiEngine"))
             {
                 if ((ComboMenu["RCantKill"].Cast<CheckBox>().CurrentValue &&
                     target.Health > Damage.ComboDamage(target, true)
                     && target.Health < Damage.ComboDamage(target)
-                    && target.Health > Player.Instance.GetAutoAttackDamage(target, true) * 2) ||
+                    && target.Health > _Player.GetAutoAttackDamage(target, true) * 2) ||
                     (ComboMenu["REnemyCount"].Cast<Slider>().CurrentValue > 0 &&
-                    Player.Instance.CountEnemiesInRange(600) >= ComboMenu["REnemyCount"].Cast<Slider>().CurrentValue) || IsRActive)
+                    _Player.CountEnemiesInRange(600) >= ComboMenu["REnemyCount"].Cast<Slider>().CurrentValue) || IsRActive)
                 {
                     ssfl = false;
                     EnableR = true;
@@ -1009,7 +1008,7 @@ namespace Blessed_Riven
                     (target.Distance(Player.Instance) > W.Range &&
                      target.Distance(Player.Instance) < E.Range + W.Range ||
                      IsRActive && R.IsReady() &&
-                     target.Distance(Player.Instance) < E.Range + 265 + Player.Instance.BoundingRadius) &&
+                     target.Distance(Player.Instance) < E.Range + 265 + _Player.BoundingRadius) &&
                     E.IsReady())
                 {
                     Player.CastSpell(SpellSlot.E, target.Position);
@@ -1030,20 +1029,20 @@ namespace Blessed_Riven
         {
             var minion =
                  EntityManager.MinionsAndMonsters.Monsters.OrderByDescending(a => a.MaxHealth)
-                     .FirstOrDefault(a => a.Distance(Player.Instance) < Player.Instance.GetAutoAttackRange(a));
+                     .FirstOrDefault(a => a.Distance(Player.Instance) < _Player.GetAutoAttackRange(a));
 
             {
                 if (minion == null) return;
 
                 if (FarmingMenu["QJungleClear"].Cast<CheckBox>().CurrentValue && Q.IsReady() &&
                        minion.Health <=
-                       Player.Instance.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.QDamage()))
+                       _Player.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.QDamage()))
                 {
                     Player.CastSpell(SpellSlot.Q, minion.Position);
                     return;
                 }
 
-                if (FarmingMenu["EJungleClear"].Cast<CheckBox>().CurrentValue && (!W.IsReady() && !Q.IsReady() || Player.Instance.HealthPercent < 20) && E.IsReady() &&
+                if (FarmingMenu["EJungleClear"].Cast<CheckBox>().CurrentValue && (!W.IsReady() && !Q.IsReady() || _Player.HealthPercent < 20) && E.IsReady() &&
                     LastCastW + 750 < Environment.TickCount)
                 {
                     Player.CastSpell(SpellSlot.E, minion.Position);
@@ -1063,14 +1062,14 @@ namespace Blessed_Riven
                     {
                         if (FarmingMenu["QLaneClear"].Cast<CheckBox>().CurrentValue && Q.IsReady() &&
                             minion.Health <=
-                            Player.Instance.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.QDamage()))
+                            _Player.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.QDamage()))
                         {
                             Player.CastSpell(SpellSlot.Q, minion.Position);
                             return;
                         }
                         if (FarmingMenu["WLaneClear"].Cast<CheckBox>().CurrentValue && W.IsReady() &&
                             minion.Health <=
-                            Player.Instance.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.WDamage()))
+                            _Player.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.WDamage()))
                         {
                             Player.CastSpell(SpellSlot.W);
                             return;
@@ -1096,14 +1095,14 @@ namespace Blessed_Riven
                 {
                     if (FarmingMenu["QLastHit"].Cast<CheckBox>().CurrentValue && Q.IsReady() &&
                         minion.Health <=
-                        Player.Instance.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.QDamage()))
+                        _Player.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.QDamage()))
                     {
                         Player.CastSpell(SpellSlot.Q, minion.Position);
                         return;
                     }
                     if (FarmingMenu["WLastHit"].Cast<CheckBox>().CurrentValue && W.IsReady() &&
                         minion.Health <=
-                        Player.Instance.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.WDamage()))
+                        _Player.CalculateDamageOnUnit(minion, DamageType.Physical, Damage.WDamage()))
                     {
                         Player.CastSpell(SpellSlot.W);
                         return;
