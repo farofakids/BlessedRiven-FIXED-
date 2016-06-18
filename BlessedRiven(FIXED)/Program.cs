@@ -693,7 +693,6 @@ namespace Blessed_Riven
 
         public static void HarassAfterAa(Obj_AI_Base target)
         {
-
             if (HarassMenu["WHarass"].Cast<CheckBox>().CurrentValue && W.IsReady() &&
                 W.IsInRange(target))
             {
@@ -707,8 +706,6 @@ namespace Blessed_Riven
                 return;
             }
             Core.DelayAction(ForceItem, 50);
-
-
         }
 
         public static void LastHitAfterAa(Obj_AI_Base target)
@@ -894,6 +891,16 @@ namespace Blessed_Riven
             var x = _Player.Position.Extend(Game.CursorPos, 300);
             if (Q.IsReady() && !_Player.IsDashing()) Player.CastSpell(SpellSlot.Q, Game.CursorPos);
             if (E.IsReady() && !_Player.IsDashing()) Player.CastSpell(SpellSlot.E, x.To3D());
+
+            var target = TargetSelector.GetTarget(E.Range + W.Range + 200, DamageType.Physical);
+            if (target == null) return;
+            if (target.Distance(Player.Instance) <= W.Range && W.IsReady())
+            {
+                Core.DelayAction(ForceItem, 50);
+                Player.CastSpell(SpellSlot.W);
+                return;
+
+            }
 
         }
 
