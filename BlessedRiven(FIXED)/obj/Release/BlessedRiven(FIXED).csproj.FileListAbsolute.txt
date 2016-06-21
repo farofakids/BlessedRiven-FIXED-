@@ -1,0 +1,11 @@
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\BlessedRiven(FIXED).exe.config
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\BlessedRiven(FIXED).exe
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\BlessedRiven(FIXED).pdb
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\EloBuddy.dll
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\EloBuddy.SDK.dll
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\SharpDX.dll
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\SharpDX.Direct3D9.dll
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\Newtonsoft.Json.dll
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Release\EloBuddy.Sandbox.dll
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\obj\Release\BlessedRiven(FIXED).exe
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\obj\Release\BlessedRiven(FIXED).pdb
