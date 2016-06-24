@@ -192,6 +192,171 @@ namespace Blessed_Riven
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
             Obj_AI_Base.OnSpellCast += Obj_AI_Base_OnSpellCast;
             Obj_AI_Base.OnPlayAnimation += Obj_AI_Base_OnPlayAnimation;
+            Obj_AI_Base.OnProcessSpellCast += OnCasting;
+        }
+
+        private static bool InWRange(GameObject target) => (Player.HasBuff("RivenFengShuiEngine") && target != null) ?
+                    330 >= _Player.Distance(target.Position) : 265 >= _Player.Distance(target.Position);
+
+        private static void OnCasting(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        {
+            if (sender.IsEnemy && sender.Type == Player.Instance.Type && MiscMenu["UseShield"].Cast<CheckBox>().CurrentValue )
+            {
+                var epos = Player.Instance.ServerPosition +
+                          (Player.Instance.ServerPosition - sender.ServerPosition).Normalized() * 300;
+
+                if (Player.Instance.Distance(sender.ServerPosition) <= args.SData.CastRange)
+                {
+                    switch (args.SData.TargettingType)
+                    {
+                        case SpellDataTargetType.Unit:
+
+                            if (args.Target.NetworkId == _Player.NetworkId)
+                            {
+                                if (!args.SData.Name.Contains("NasusW"))
+                                {
+                                    if (E.IsReady()) E.Cast(epos);
+                                }
+                            }
+
+                            break;
+                        case SpellDataTargetType.SelfAoe:
+
+                                if (E.IsReady()) E.Cast(epos);
+
+                            break;
+                    }
+                    if (args.SData.Name.Contains("IreliaEquilibriumStrike"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (W.IsReady() && InWRange(sender)) W.Cast();
+                            else if (E.IsReady()) E.Cast(epos);
+                        }
+                    }
+                    if (args.SData.Name.Contains("TalonCutthroat"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (W.IsReady()) W.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("RenektonPreExecute"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (W.IsReady()) W.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("GarenRPreCast"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast(epos);
+                        }
+                    }
+                    if (args.SData.Name.Contains("GarenQAttack"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("XenZhaoThrust3"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (W.IsReady()) W.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("RengarQ"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("RengarPassiveBuffDash"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("RengarPassiveBuffDashAADummy"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("TwitchEParticle"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("FizzPiercingStrike"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("HungeringStrike"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("YasuoDash"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("KatarinaRTrigger"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (W.IsReady() && InWRange(sender)) W.Cast();
+                            else if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("YasuoDash"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("KatarinaE"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (W.IsReady()) W.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("MonkeyKingQAttack"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                        }
+                    }
+                    if (args.SData.Name.Contains("MonkeyKingSpinToWin"))
+                    {
+                        if (args.Target.NetworkId == _Player.NetworkId)
+                        {
+                            if (E.IsReady()) E.Cast();
+                            else if (W.IsReady()) W.Cast();
+                        }
+                    }
+                }
+            }
         }
 
         private static void DoQSS()
