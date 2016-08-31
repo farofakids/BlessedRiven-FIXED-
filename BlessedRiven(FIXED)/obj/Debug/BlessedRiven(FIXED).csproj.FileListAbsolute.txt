@@ -38,5 +38,5 @@ C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\D
 C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Debug\SharpDX.dll
 C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Debug\SharpDX.Direct3D9.dll
 C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Debug\Newtonsoft.Json.dll
-C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Debug\EloBuddy.Sandbox.dll
 C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\obj\Debug\BlessedRiven(FIXED).csprojResolveAssemblyReference.cache
+C:\Users\Bruno_PC\Documents\GitHub\BlessedRiven-FIXED-\BlessedRiven(FIXED)\bin\Debug\EloBuddy.Sandbox.dll

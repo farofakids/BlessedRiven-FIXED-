@@ -170,8 +170,8 @@ namespace Blessed_Riven
 
             DelayMenu = Menu.AddSubMenu("Delay Settings(Humanizer)", "Delay");
             DelayMenu.Add("useHumanizer", new CheckBox("Use Humanizer?", false));
-            DelayMenu.Add("spell1a1b", new Slider("Q1,Q2 Delay(ms)", 261, 100, 400));
-            DelayMenu.Add("spell1c", new Slider("Q3 Delay(ms)", 353, 100, 400));
+            DelayMenu.Add("spell1a1b", new Slider("Q1,Q2 Delay(ms)", 290, 100, 400));
+            DelayMenu.Add("spell1c", new Slider("Q3 Delay(ms)", 390, 100, 400));
             DelayMenu.Add("spell2", new Slider("W Delay(ms)", 120, 100, 400));
             DelayMenu.Add("spell4a", new Slider("R Delay(ms)", 0, 0, 400));
             DelayMenu.Add("spell4b", new Slider("R2 Delay(ms)", 100, 50, 400));
@@ -215,14 +215,14 @@ namespace Blessed_Riven
                             {
                                 if (!args.SData.Name.Contains("NasusW"))
                                 {
-                                    if (E.IsReady()) E.Cast(epos);
+                                    if (E.IsReady()) Player.CastSpell(SpellSlot.E, epos);
                                 }
                             }
 
                             break;
                         case SpellDataTargetType.SelfAoe:
 
-                                if (E.IsReady()) E.Cast(epos);
+                            if (E.IsReady()) Player.CastSpell(SpellSlot.E, epos);
 
                             break;
                     }
@@ -551,7 +551,7 @@ namespace Blessed_Riven
                     }
                     else
                     {
-                        t = 221;
+                        t = 290;
                         QCount = 1;
                     }
                     break;
@@ -563,7 +563,7 @@ namespace Blessed_Riven
                     }
                     else
                     {
-                        t = 221;
+                        t = 290;
                         QCount = 2;
                     }
                     break;
@@ -575,7 +575,7 @@ namespace Blessed_Riven
                     }
                     else
                     {
-                        t = 303;
+                        t = 390;
                         QCount = 0;
                     }
                     break;
